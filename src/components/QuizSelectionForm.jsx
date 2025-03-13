@@ -1,26 +1,46 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
-function QuizSelectionForm() {
-    const [formData, setFormData] = useState({
-        category: '',
-        difficulty: '',
-        amount: ''
-    });
+function QuizSelectionForm( userAPI, quizRequest, setQuizRequest, errorStatus, setErrorStatus ) {
 
-    const [categories, setCategories] = useState([]);
-    const [inputValue] = useState('');
-    const [categoryError, setCategoryError] = useState('');
-    const [errorStatus, setErrorStatus] = useState('');
+    const [categories, setCategories] = useState({});
+    const [quizFormData, setQuizFormData] = useState({ category: '', difficulty: '', amount: '' });
+
+    const handleChange = (event) => {
+        const { name, value } = event.target;
+        setQuizFormData(prevState => ({
+            ...prevState,
+            // set key called name to point to value
+            [name]: value,
+        }));
+    }
+    
+    const handleSubmit = (event) => {
+        event.preventDefault();
+
+        if (!isFormDataValid(quizFormData)) {
+            alert(errorStatus);
+            return;
+        }
+        setQuizRequest = formattedQuery(quizFormData);
+    }
+    
+    const formattedQuery = () => {
+        let query=['type=multiple']
+        if (quizFormData.category != 0) { query.push(`category=${quizFormData.category}`) }
+        if (quizFormData.difficulty != 0) {query.push(`difficulty=${quizFormData.difficulty}`) }
+        query.push(`amount=${quizFormData.amount}`, `token=${userAPI}`)
+        return query.join('&')
+    }
 
     useEffect(() => {
         fetch(`https://opentdb.com/api_category.php`)
                 .then(response => response.json())
                 .then(data => {
                     setCategories(data.trivia_categories);
-                    setCategoryError('')
+                    setErrorStatus('')
                 })// reset category error message
                 .catch(() => {
-                    setCategoryError(`Failed to load categories`);
+                    setErrorStatus(`Failed to load categories.`);
                     setCategories(
                         {
                             'Random': 8,
@@ -50,63 +70,25 @@ function QuizSelectionForm() {
                             'Entertainment: Cartoon &amp; Animations': 32
                         }
                     )
-                    handleError();
+                    console.alert({ errorStatus });
                 });
-    },[]);
-
-    const handleError = () => {
-        setErrorStatus('Error loading categories');
-    }
-
-    const handleSubmit = (event) => {
-        event.preventDefault();
-
-        if (!isFormDataValid(formData)) {
-            alert({ errorStatus });
-            return;
-        }
-        
-        return formatFormData(formData);
-    }
-
-    const handleChange = (event) => {
-        const { name, value } = event.target;
-        setFormData(prevState => ({
-            ...prevState,
-            [name]: value,
-        }));
-    }
+    },[errorStatus, setErrorStatus]);
 
     const isFormDataValid = (data) => {
-        if ( Object.values(data).every(value => !value.trim.isEmpty()) ) {
-            setErrorStatus('');
+        if ( Object.values(data).every(value => value.trim() !== '') ) {
             return true;
         } else {
-            setErrorStatus('All fields are required');
+            window.alert('All fields are required');
             return false;
         }
     }
 
-    const formatFormData = (data) => {
-        // handle random - formData
-        if (data.category == 8) {
+    const formatQuizFormData = (data) => {
+        // handle random - categoy
+        if (parseInt(data.category) === 8) {
             data.category = 0;
-        } else {
-            // if not random, was category made due to fetch error
-            if (categories.Random) {
-                data.category = categories[data.category];
-            } else {
-                // if no fetch error categories data format will be [{id: number, name: category}, { etc... }]
-                categories.forEach(category => {
-                    if (data.category == category.name) {
-                        data.category = category.id;
-                    }
-                });
-            }
         }
-        if (data.difficulty.toLowerCase() == 'random') {
-            data.difficulty = 0;
-        }
+
     }
 
     const categoryTable = () => {
@@ -135,69 +117,65 @@ function QuizSelectionForm() {
     }
 
         // if errorStatus display category table to show which id nums associate with the desired category
-        // And input type=text for 
+    // And input type=text for 
     return (
         <div className="formContainer">
-            { errorStatus && categoryTable() }
-            <form>
-                 {/* if category fetch fails category table will be rendered and input will be number based */}
-                <div className="categoryInputContainer">
+            { errorStatus && categoryTable() /* short-curcuit with called function */}
+            <form name="QuizSelectionForm" onSubmit={ handleSubmit }>
+                    {/* if category fetch fails category table will be rendered and input will be number based */}
+                <div className="categoryInputContainer" id='categoryContainer'>
                     <label htmlFor="category">Category: </label>
-                    {categoryError ? (
+                    {errorStatus ? (
                         <input
                             type="number"
                             min="8"
                             max="32"
                             name="category"
-                            value={ inputValue }
+                            value={ quizFormData.category }
                             onChange={ handleChange }
                             title="Your number must within the range"
                             placeholder="Type a category number between 8 - 32"
                         />
                     ) : (
                         <select
+                            name="category"
                             onChange={ handleChange }
-                            value={ inputValue }
+                            value={ quizFormData.category }
                             title="You must choose a category, to randomize, select Random"
                         >
                             <option value="">Select a Category...</option>
                             {categories.map((category) => (
-                                <option key={ category.id } value={ category.id }>{ category.name }</option>
-                            )
-                        )}
-                        <option value="0">Random</option>
+                                <option key={ category.id } value={ category.id }>
+                                    { category.name }
+                                </option>
+                            ))}
+                            <option value="8">Random</option>
                         </select>
                     )}
-                    {categoryError && <p>{ categoryError }</p>}
+                    {errorStatus && <p>{ errorStatus }</p>}
                 </div>
-                <div className="difficultyInputContainer">
+                <div className="difficultyInputContainer" id='difficultyContainer'>
                     <label htmlFor="difficulty">Difficulty: </label>
-                    <select name="difficulty">
+                    <select name="difficulty" onChange={ handleChange } value={ quizFormData.difficulty }>
                         <option value="">Select a Difficulty...</option>
-                        <option value="0">Random</option>
+                        <option value="8">Random</option>
                         <option value="easy">Easy</option>
                         <option value="medium">Medium</option>
                         <option value="hard">Hard</option>
                     </select>
                 </div>
-                <div className="amountInputContainer">
+                <div className="amountInputContainer" id='amountContainer'>
                     <label htmlFor="amount">Number of Questions: </label>
                     <input
                         type="number"
                         min="1"
-                        max="50"
+                        max={ maxAvailableQuestions }
                         name="amount"
-                        value={ formData.amount }
+                        value={ quizFormData.amount }
                         onChange={ handleChange }
                     />
-                </div>
-                <div className="buttonContainer">
-                    <button type="button" onClick={ handleSubmit }>Get my trivia questions</button> 
                 </div>
             </form>
         </div>
     )
-    
 }
-
-export default QuizSelectionForm
