@@ -83,13 +83,33 @@ function QuizSelectionForm( userAPI, quizRequest, setQuizRequest, errorStatus, s
         }
     }
 
-    const formatQuizFormData = (data) => {
+   /*  const formatQuizFormData = (data) => {
         // handle random - categoy
         if (parseInt(data.category) === 8) {
             data.category = 0;
         }
 
     }
+
+    const formattedQuery = () => {
+        query=['type=multiple']
+        if (quizFormData.category != 0) { query.push(`category=${quizFormData.category}`) }
+        if (quizFormData.difficulty != 0) {query.push(`difficulty=${quizFormData.difficulty}`) }
+        query.push(`amount=${quizFormData.amount}`)
+        return query.join('&')
+    }
+    
+      useEffect((formattedQuery) => {
+        
+        fetch(`https://opentdb.com/api.php?${ formattedQuery }`)
+        .then(response => response.json())
+        .then(data => {
+          setCategories(data);
+          setCategoryError('');
+        })
+        .catch(() => {
+          setCategoryError(`Failed to load categories`);
+      }, []) */
 
     const categoryTable = () => {
         return (
