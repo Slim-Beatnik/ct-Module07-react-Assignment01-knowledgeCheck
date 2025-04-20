@@ -87,6 +87,64 @@
 
 Here's a blank template to get started. To avoid retyping too much info, do a search and replace with your text editor for the following: `github_username`, `repo_name`, `twitter_handle`, `linkedin_username`, `email_client`, `email`, `project_title`, `project_description`, `project_license`
 
+project_description
+
+The story:
+I've got a buddy who loves to do nerdy trivia events. He enjoys going to them and, more over, enjoys putting them on - but alas with hand-selected quiz questions, he MUST play the quiz host.
+Once I got the assignement I thought wouldn't it be nice if there were such a way that he could run the trivia and participate in it? I think so.
+That's my goal here.
+
+My plan:
+App - parent passes props by mapProps and holds the main useState values for maximum performance and readability.
+renders Components dynamically
+Always displays a footer which has control buttons. The submit button changes its function based on the value of currPage.
+
+Footer - buttons in order(left to right):
+  -Restart button: pulls up prompt to reset all states (including api token) to default values which are empty strings, arrays, objects, or no-op functions,
+    or goes back to selection page (keeps api token),
+    or cancels prompt
+  -back button: should go to previous page for whatever reason, data will be overwritten if altered.
+  -previous question button, (hidden until quiz) so that submit will be between prevQ and nextQ buttons.
+  -submit button: will be multipurpose depending on currPage and existing inputs.
+    -welcome: first set Quiz Master, which is an object with name and apiToken key, then next page.
+    -quiz selection form: first takes all input values from form and formats them for creating queries, then next page.
+    -team creation form: first takes all input values to format them for team objects, then next page (query timer must reach 0 before button will be enabled for next page - play button svg).
+    -quiz: first confirm answers, next page after last question - mostly for quiz master if they need to go back for whatever reason (as to avoid limitations of gameplay)
+    -quiz results: Congratulates winner, then restarts at selection.
+  -next question buttons: goes to the next question - disabled until all teams have answered question.
+
+Page order is as follows:
+Welcome:
+  -get quiz master name and apiToken - read tutorial, (tentative plan is to run through each page with dummy values to highlight divs and describe walkthrough steps.)
+QuizSelectionForm:
+  -props from app: quizMaster(for token), quiz related setState functions, error and setError
+  -new props for input fields:
+      categories: display manual category id => name table if fetch fails or is created by fetch data
+      categoryFetchError: if category fetch has error - distinction from
+        error status for ease of use.
+    formInputDisplay: distinct from quizInput data for ease of clearing display only
+    quizFormData: for collecting input data converted to queries for  looping over to fetch questions.
+    quizInputData: object collects queryPriority radio inputs (slightly alters way query is formatted - used to bypass category difficulty vs amount issues), category, difficulty, and amount.
+  -has 1 child, SelectionInput which displays inputs and handles pre-submit validation
+  -timer begins 5 seconds between each fetch based on separate categories, and amounts > 50.
+    SelectionInput:
+      -new props:
+        --maximumAmount: sets input type=number max= , to show invalid input values (api requests with amounts that are too high result in empty returns.)
+Team Creation Form:
+  -prop from app: teamInfo(input) and teams(output / collection array)
+  -no children
+  -only validation is teams don't have the same avatar and color combination - also team names cannot be changed later.
+  -busy work if waiting for fetch for a grip.
+Quiz:
+  Once fetch is complete the prop it will be ready to recieve is an array questions.
+  -props recieved: quizResults and setQuizResults(may allow answer changes?)
+  -child for question display? - may also handle showing correct answer.
+Quiz Results:
+  -props recieved: quizResults
+  show team percentages and Overall winner.
+  -submit will return to selection page (maybe keep teams?)
+
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
