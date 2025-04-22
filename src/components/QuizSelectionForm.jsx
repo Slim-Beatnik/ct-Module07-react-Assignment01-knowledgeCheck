@@ -19,52 +19,51 @@ function QuizSelectionForm(
     })
 {
 
-    console.log(requestTimer, setRequestTimer, quizRequest, onPrev, onNext, setHandleSubmit, errorStatus)
+    console.log('bypass: ',requestTimer, setRequestTimer, quizRequest, onPrev, onNext, setHandleSubmit, errorStatus)
 
-    const [categories, setCategories] = useState([{}]);
+    const [categories, setCategories] = useState({});
     const [categoryFetchError, setCategoryFetchError] = useState('');
-    const [quizFormData, setQuizFormData] = useState([{index: 0, inputs:{ queryPriority: '', category: '', difficulty: '', amount: '' }}]);
+    const [quizFormData, setQuizFormData] = useState([{inputs:{ queryPriority: '', category: '', difficulty: '', amount: '' }}]);
 
     
+
     
     
     useEffect(() => {
         fetch(`https://opentdb.com/api_category.php`)
                 .then(response => response.json())
                 .then(data => {
-                    setCategories([data.trivia_categories]);
-                    console.log([data.trivia_categories])
+                    setCategories(data.trivia_categories);
                     setCategoryFetchError('')
                 })// reset category error message
                 .catch(() => {
-                    setCategoryFetchError(`Failed to fetch categories to load dynamically.`);
-                    setCategories({
-                            'Random': 8,
-                            'General Knowledge': 9,
-                            'Entertainment: Books': 10,
-                            'Entertainment: Film': 11,
-                            'Entertainment: Music': 12,
-                            'Entertainment: Musicals &amp; Theatres': 13,
-                            'Entertainment: Television': 14,
-                            'Entertainment: Video Games': 15,
-                            'Entertainment: Board Games': 16,
-                            'Science &amp; Nature': 17,
-                            'Science: Computers': 18,
-                            'Science: Mathematics': 19,
-                            'Mythology': 20,
-                            'Sports': 21,
-                            'Geography': 22,
-                            'History': 23,
-                            'Politics': 24,
-                            'Art': 25,
-                            'Celebrities': 26,
-                            'Animals': 27,
-                            'Vehicles': 28,
-                            'Entertainment: Comics': 29,
-                            'Science: Gadgets': 30,
-                            'Entertainment: Japanese Anime &amp; Manga': 31,
-                            'Entertainment: Cartoon &amp; Animations': 32
-                });
+                    setCategoryFetchError(`Failed to fetch categories to load dynamically. categories based on data from March '25`);
+                    setCategories([
+                        {'id': 9, 'name': 'General Knowledge'},
+                        {'id': 10, 'name': 'Entertainment: Books'},
+                        {'id': 11, 'name': 'Entertainment: Film'},
+                        {'id': 12, 'name': 'Entertainment: Music'},
+                        {'id': 13, 'name': 'Entertainment: Musicals & Theatres'},
+                        {'id': 14, 'name': 'Entertainment: Television'},
+                        {'id': 15, 'name': 'Entertainment: Video Games'},
+                        {'id': 16, 'name': 'Entertainment: Board Games'},
+                        {'id': 17, 'name': 'Science & Nature'},
+                        {'id': 18, 'name': 'Science: Computers'},
+                        {'id': 19, 'name': 'Science: Mathematics'},
+                        {'id': 20, 'name': 'Mythology'},
+                        {'id': 21, 'name': 'Sports'},
+                        {'id': 22, 'name': 'Geography'},
+                        {'id': 23, 'name': 'History'},
+                        {'id': 24, 'name': 'Politics'},
+                        {'id': 25, 'name': 'Art'},
+                        {'id': 26, 'name': 'Celebrities'},
+                        {'id': 27, 'name': 'Animals'},
+                        {'id': 28, 'name': 'Vehicles'},
+                        {'id': 29, 'name': 'Entertainment: Comics'},
+                        {'id': 30, 'name': 'Science: Gadgets'},
+                        {'id': 31, 'name': 'Entertainment: Japanese Anime & Manga'},
+                        {'id': 32, 'name': 'Entertainment: Cartoon & Animations'}
+                    ]);
                     alert(`${ categoryFetchError }`);
                 });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -83,9 +82,9 @@ function QuizSelectionForm(
                     </thead>
                     <tbody>
                         {
-                            categories[0].map((categoryName, categoryNum) => {
+                            categories.map(category => {
                                 return (
-                                    <tr><td>{ categoryNum }</td><td>{ categoryName }</td></tr>
+                                    <tr><td>{ category.id }</td><td>{ category.name }</td></tr>
                                 )
                             })
                         }
@@ -96,9 +95,11 @@ function QuizSelectionForm(
     }
 
     const handleInputChange = (index, name, value) => {
-        const updatedFormData = [...quizFormData];
-        updatedFormData[index][name] = value;
-        setQuizFormData(updatedFormData);
+        setQuizFormData(prevInputs => {
+            const newInputs = [...prevInputs];
+            newInputs[index] = { ...newInputs[index], [name]: value};
+            return newInputs;
+        });
     }
 
     // add SelectionInput to display array, and new quizInputData
@@ -111,7 +112,10 @@ function QuizSelectionForm(
 
     // remove SelectionInput from display array, and quizInputData at index
     const removeInput = (delIndex) => {
-        setQuizFormData(quizFormData.filter((_, index) => index!= delIndex));
+        if (quizFormData.length === 1) {
+            clearForm
+        }
+        setQuizFormData(quizFormData.filter((_, index) => index != delIndex));
     }
 
     // clear data from display and data arrays by reinitializing them to defaults
@@ -120,7 +124,12 @@ function QuizSelectionForm(
     }
 
     const isFormDataValid = (data) => {
-        return data.queryPriority && data.category && data.difficulty && data.amount;
+        return [
+            data.queryPriority.trim() !== ''
+            && data.category.trim() !== ''
+            && data.difficulty.trim() !== ''
+            && data.amount.trim() !== ''
+        ].every(b => b == true)
     }
     
     const formatQuery = (data) => {
@@ -146,12 +155,8 @@ function QuizSelectionForm(
 
         
     }
-    console.log('quizRequest:', quizRequest);
-    console.log('quizRequest is array:', Array.isArray(quizRequest));
-    quizRequest.forEach((item, i) => {
-        console.log(`item ${i}:`, item);
-    });
-        console.log(handleInputChange, removeInput, addInput, clearForm)
+    
+
     return (
         <div className="quizSelectionFormContainer">
             <div className="instructions">
@@ -168,21 +173,27 @@ function QuizSelectionForm(
                 }
             </div>
             <div className="formContainer">
-                <form name="quizSelectionForm" onSubmit={ handleQuizSelectionFormSubmit } className="quizSelectionForm">
-                    { quizFormData.map((inputData, index) => (
-                        <div key={ index } className={ `input${ index }` }>
-                            <SelectionInput
-                                quizInputData={ inputData }
-                                setQuizInputData={ (name, value) => handleInputChange(index, name, value) }
-                                categories={ categories }
-                            />
-                            <input type="image" src="InputToggleBtn" onClick={ () => removeInput(index) } />
+                { categories &&
+                    <form name="quizSelectionForm" onSubmit={ handleQuizSelectionFormSubmit } className="quizSelectionForm">
+                        { quizFormData.map((inputData, index) => (
+                            <div key={ index } className={ `input${ index }` }>
+                                <SelectionInput
+                                    inputIndex={ index }
+                                    quizInputData={ inputData }
+                                    setQuizInputData={ (name, value) => handleInputChange(index, name, value) }
+                                    categories={ categories }
+                                />
+                                <div className="svgButton">
+                                    <input className="remove" type="image" src={ InputToggleBtn } onClick={ () => removeInput(index) } />
+                                </div>
+                            </div>
+                        )) }
+                        <div className="svgButton">
+                            <input className="add" type="image" src={ InputToggleBtn } onClick={ addInput } />
+                            <button type="button" className="clearFormBtn" onClick={ clearForm }>Clear Form</button>
                         </div>
-                    )) }
-                    <input type="image" src={ InputToggleBtn } onClick={ addInput } />
-                    <button className="clearFormBtn" onClick={ clearForm }>Clear Form</button>
-                    <button type="submit">Submit Quiz Request</button>
-                </form>
+                    </form>
+                }
             </div>
         </div>
     )

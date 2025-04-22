@@ -108,6 +108,9 @@ function FooterControls({
                 }
             </div>
             <div>
+                <div>
+                        { errorStatus && <p className="errorMessage">{ errorStatus }</p> }
+                </div>
                 <button
                     type="submit"
                     onClick={ handleSubmit.func ?? onNext }
@@ -128,7 +131,6 @@ function FooterControls({
                     </input>
                 )}
             </div>
-            { errorStatus && <p className="errorMessage">{ errorStatus }</p> }
         </div>
     )
 

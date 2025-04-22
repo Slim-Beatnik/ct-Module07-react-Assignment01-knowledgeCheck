@@ -114,7 +114,6 @@ function App() {
             {/* <QuizSelectionForm { ...propMap['selection'] } /> */}
             </div>
             <div id="controlsContainer">
-                { errorStatus && <div id="errorContainer">{ errorStatus }</div> }
                 <FooterControls { ...propMap['controls'] } />
             </div>
         </div>

@@ -1,14 +1,13 @@
 import { useState, useEffect } from 'react';
 
-function SelectionInput({ inputIndex, categoryError, setCategoryError, categories, quizInputData, setQuizInputData }){
-    
-    console.log("input index: ",inputIndex)
+function SelectionInput({ inputIndex, categoryFetchError, setCategoryFetchError, categories, quizInputData, setQuizInputData }){
 
     const [maxAvailableQuestions, setMaxAvailableQuestions] = useState({});
     const [amountError, setAmountError] = useState('');
 
     const handleChange = (event) => {
         const { name, value } = event.target;
+        setQuizInputData(name, value);
 
         // handle max questions
         const maxQuestions = maxAvailableQuestions[quizInputData.difficulty] || maxAvailableQuestions.total || 50;
@@ -18,11 +17,7 @@ function SelectionInput({ inputIndex, categoryError, setCategoryError, categorie
             setAmountError('');
         }
 
-        setQuizInputData(prevState => ({
-            ...prevState,
-            // set key called name(from target) to point to value
-            [name]: value,
-        }));
+        setQuizInputData(name, value)
     }
     
     const isInputDataValid = () => {
@@ -51,41 +46,43 @@ function SelectionInput({ inputIndex, categoryError, setCategoryError, categorie
                     });
                 })
                 .catch(error => {
-                    setCategoryError(`Error fetching categories: ${ error.message }`);
+                    setCategoryFetchError(`Error fetching categories: ${ error.message }`);
                 });
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [quizInputData.category]);
-
     return (
         <div className="selectionInputContainer">
             <div className="priorityInputContainer">
-                <label forHtml={`priorityCheck${inputIndex}`} className="priorityRadio">Priority
-                    <input
-                        type="radio"
-                        id={ `priorityAmount${inputIndex}` }
-                        name="queryPriority"
-                        checked={ quizInputData.queryPriority === 'amount' }
-                        onChange={ handleChange }
-                    />
-                    <label forHtml="priorityAmount">Number of Questions</label>
-                    <input
-                        type="radio"
-                        id={ `priorityDifficulty${inputIndex}` }
-                        name="queryPriority"
-                        checked={ quizInputData.queryPriority === 'difficulty' }
-                        onChange={ handleChange }
-                    />
-                    <label forHtml={ `priorityDifficulty${inputIndex}` }>Difficulty of question</label>
-                </label>
+                <input
+                    type="radio"
+                    id={ `priorityAmount${inputIndex}` }
+                    name="queryPriority"
+                    value="amount"
+                    checked={ quizInputData.queryPriority === 'amount' }
+                    defaultChecked={ true }
+                    onChange={ handleChange }
+                />
+                <label htmlFor={ `priority${inputIndex}` }>Prioritize number of questions</label>
+                <br />
+                <input
+                    type="radio"
+                    id={ `priorityDifficulty${inputIndex}` }
+                    name="queryPriority"
+                    value="difficulty"
+                    checked={ quizInputData.queryPriority === 'difficulty' }
+                    onChange={ handleChange }
+                />
+                <label htmlFor={ `priorityDifficulty${inputIndex}` }>Prioritize desired difficulty</label>
             </div>
             <div className="categoryInputContainer" id='categoryContainer'>
-                <label htmlFor="category">Category: </label>
-                { categoryError ? (
+                <label htmlFor={ `category${inputIndex}` }>Category: </label>
+                { categoryFetchError ? (
                     <input
                         type="number"
                         min="8"
                         max="32"
+                        id={ `category${inputIndex}` }
                         name="category"
                         value={ quizInputData.category || '' }
                         onChange={ handleChange }
@@ -94,26 +91,27 @@ function SelectionInput({ inputIndex, categoryError, setCategoryError, categorie
                     />
                 ) : (
                     <select
+                        id={ `category${inputIndex}` }
                         name="category"
                         onChange={ handleChange }
                         value={ quizInputData.category || '' }
                         title="You must choose a category or select Random"
                     >
                         <option value="">Select a Category...</option>
-                        {console.log('categories: ',categories)}
-                        {categories[0].map((category) => (
-                            <option key={ category.id } value={ category.id }>
-                                { category.name }
+                        { Object.keys(categories).map((category, i) => (
+                            <option key={ i } value={ categories[category] }>
+                                { categories[category].name }
                             </option>
                         ))}
                         <option value="8">Random</option>
                     </select>
                 )}
-                {categoryError && <p className="errorMessage">{ categoryError }</p>}
+                {categoryFetchError && <p className="errorMessage">{ categoryFetchError }</p>}
             </div>
             <div className="difficultyInputContainer" id='difficultyContainer'>
-                <label htmlFor="difficulty">Difficulty: </label>
+                <label htmlFor={ `difficulty${inputIndex}` }>Difficulty: </label>
                 <select
+                    id={ `difficulty${inputIndex}` }
                     name="difficulty"
                     onChange={ handleChange }
                     value={ quizInputData.difficulty }
@@ -126,11 +124,12 @@ function SelectionInput({ inputIndex, categoryError, setCategoryError, categorie
                 </select>
             </div>
             <div className="amountInputContainer" id='amountContainer'>
-                <label htmlFor="amount">Number of Questions: </label>
+                <label htmlFor={ `amount${inputIndex}` }>Number of Questions: </label>
                 <input
                     type="number"
                     min="1"
-                    max={ maxAvailableQuestions.difficulty || maxAvailableQuestions.total || 50 }
+                    max={ maxAvailableQuestions[quizInputData.difficulty] || maxAvailableQuestions.total || 50 }
+                    id={ `amount${inputIndex}` }
                     name="amount"
                     value={ quizInputData.amount || '' }
                     onChange={ handleChange }

@@ -45,6 +45,24 @@
   margin-right: auto;
 }
 
+.svgButton {
+  width: 200px !important;
+  height: 200px !important;
+  .remove {
+    transform: scale(-.5);
+    svg .color1 {
+      fill: #de004a !important;
+    }
+    svg #plusColor {
+      fill: #de004a !important;
+    }
+    svg #bgTopColor {
+      fill: #de004a !important;
+    }
+  }
+}
+
+
 button {
   width: fit-content;
   height: fit-content;
@@ -92,7 +110,6 @@ input:invalid {
 
 .writeupContainer h1 {
   filter: drop-shadow(2px 2px 2px #000) sepia(100%) opacity(.6);
-  /* opacity: .6; */
 }
 
 .subList {
@@ -111,12 +128,9 @@ input:invalid {
 
 
 
-svg {
-  height: 200px !important;
-  width: auto !important;
-}
 
-svg, input, button {
+
+input, button {
   height: 50% !important;
   width:auto !important;
 }
