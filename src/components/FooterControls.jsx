@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import restartArrow from '/buttons/restartArrow.svg';
-import backArrow  from '/buttons/backArrow.svg';
-import prevArrow  from '/buttons/prevArrow.svg';
-import nextArrow  from '/buttons/nextArrow.svg';
+import RestartArrow from './buttons/RestartArrow.jsx';
+import BackArrow from './buttons/BackArrow.jsx';
+import DirArrow from './buttons/DirArrow.jsx';
+
 
 function FooterControls({
         noop,
@@ -34,24 +34,24 @@ function FooterControls({
     // reset helper functions
     const ruinEverything = () => {
         setQuizMaster({name: '', token: ''});
-        setRequestTimer(null);
         setQuestions([]);
         setCurrQuestion(0);
         setHandleSubmit({});
+        setRequestTimer(noop);
         alert("You've ruined EVERYTHING! You're the problem.");
         setErrorStatus('');
-        setShowResetPrompt(false);
         setCurrentPage('welcome');
+        setShowResetPrompt(false);
     }
 
     const resetQuiz = () => {
         setCurrentPage('selection');
         setErrorStatus('');
         setQuestions([]);
+        setShowResetPrompt(false);
     }
     
     const cancel = () => {
-
         setShowResetPrompt(false);
     }
 
@@ -59,7 +59,7 @@ function FooterControls({
 
     return (
         <div className="buttonContainer">
-            {showResetPrompt && (
+            { showResetPrompt && (
                 /* this only shows up once if you push the button. I'm ok w/ inline here*/
                 <div id="resetPrompt">
                     <h3 style={{ fontWeight: 'bold', color: '#de004a' }}>
@@ -76,36 +76,30 @@ function FooterControls({
             )}
             <div>
                 { showRestartBtn && (
-                    <input
-                        type="image"
-                        src={ restartArrow }
+                    <RestartArrow
+                        bgColor="#b11313"
+                        arrowColor="#000000cc"
                         onClick={ () => setShowResetPrompt(true) }
-                        title="Press to, IDK, ruin everything... Jerk."
-                        alt="Restart"
                     />
                 )}
             </div>
             <div>
                 { showBackBtn && (
-                    <input
-                        type="image"
-                        src={ backArrow }
+                    <BackArrow
+                        color="#aceeeeee"
                         onClick={ onPrev }
-                        title="Press to go to previous page"
-                        alt="Back"
                     />
                 )}
             </div>
             <div>
                 { showPrevQuestionBtn && (
-                    <input
-                        type="image"
-                        src={ prevArrow }
+                    <DirArrow
+                        pointsRightBool = { false }
+                        arrowColor="#000"
+                        shadowColor="#aceeee99"
                         onClick={ noop }
-                        title="Press to go to previous question"
-                        alt="Previous Question"
-                    />)
-                }
+                    />
+                )}
             </div>
             <div>
                 <div>
@@ -122,13 +116,12 @@ function FooterControls({
             </div>
             <div>
                 { showNextQuestionBtn && (
-                    <input
-                        type="image"
-                        src={ nextArrow }
+                    <DirArrow
+                        pointsRightBool = { true }
+                        arrowColor="#000"
+                        shadowColor="#aceeee99"
                         onClick={ noop }
-                        title="Press to go to next question"
-                        alt="Next Question">
-                    </input>
+                    />
                 )}
             </div>
         </div>

@@ -1,40 +1,49 @@
 import { useState, useEffect } from 'react';
 
-function SelectionInput({ inputIndex, categoryFetchError, setCategoryFetchError, categories, quizInputData, setQuizInputData }){
+function QuizSelectionInput({ inputIndex, categoryFetchError, setCategoryFetchError, categories, quizInputData, onInputChange }) {
 
     const [maxAvailableQuestions, setMaxAvailableQuestions] = useState({});
     const [amountError, setAmountError] = useState('');
-
     const handleChange = (event) => {
-        const { name, value } = event.target;
-        setQuizInputData(name, value);
+        let { name, value } = event.target;
+        if (name.includes('queryPriority')) {
+            name = 'queryPriority';
+        }
+        if (name === 'amount') {
+            if (quizInputData.queryPriority === 'amount' && value > maxAvailableQuestions[quizInputData.difficulty]) {
+                onInputChange('difficulty', '8');
+                value = Math.min(value, maxAvailableQuestions[quizInputData.total])
+                setAmountError(`The amount has been changed to ${ value }. There are ${ maxAvailableQuestions[quizInputData.total] } questions available for this category, but the difficulty will vary.`);
+            }
+            if (quizInputData.queryPriority === 'difficulty' && value > maxAvailableQuestions[quizInputData.difficulty]) {
+                value = Math.min(value, maxAvailableQuestions[quizInputData.difficulty]);
+                setAmountError(`The amount has been changed to ${ value }. There are only ${ maxAvailableQuestions[quizInputData.difficulty] } questions available for this difficulty.`);
+            }
+            if (value > 50) {
+                value = 50;
+                setAmountError(`The amount has been changed to ${ value }. There is a maximum cap of 50 questions for each API query.`);
+            }
 
-        // handle max questions
-        const maxQuestions = maxAvailableQuestions[quizInputData.difficulty] || maxAvailableQuestions.total || 50;
-        if (value < 1 || value > maxQuestions) {
-            setAmountError(`Please enter an amount between 1 and ${maxQuestions}`);
-        } else {
-            setAmountError('');
         }
 
-        setQuizInputData(name, value)
+        onInputChange(name, value); // let parent handle actual state update
     }
     
     const isInputDataValid = () => {
-        const data = { ...quizInputData };
-        return Object.values(data).every(value => value.trim() !== '');
+        return Object.values(quizInputData).every(value => value.toString().trim() !== '');
     }
 
     
     const formatQuizInputData = (data) => {
-        // handle random - category
-        return parseInt(data) == 8 ? 0 : data;
+        // handle random category
+        const category = parseInt(data.category);
+        return category == 8 ? 0 : category;
     }
 
     useEffect(() => {
         const formattedCategory = formatQuizInputData(quizInputData)
         if (formattedCategory) {
-            fetch(`https://opentdb.com/api_count.php?category=${ quizInputData.category }`)
+            fetch(`https://opentdb.com/api_count.php?category=${ formattedCategory }`)
                 .then(response => response.json())
                 .then(data => {
                     const categoryCount = data.category_question_count
@@ -51,30 +60,40 @@ function SelectionInput({ inputIndex, categoryFetchError, setCategoryFetchError,
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [quizInputData.category]);
+
+    const displayMaxAvailableQuestions = () => {
+        if (quizInputData.queryPriority === 'amount') {
+            return Math.min(maxAvailableQuestions.total, 50);
+        } else {
+            return Math.min(maxAvailableQuestions[quizInputData.difficulty], 50);
+        }
+    }
+
     return (
         <div className="selectionInputContainer">
+            {/* PRIORITY */}
             <div className="priorityInputContainer">
                 <input
                     type="radio"
                     id={ `priorityAmount${inputIndex}` }
-                    name="queryPriority"
+                    name={ `queryPriority${inputIndex}` }
                     value="amount"
                     checked={ quizInputData.queryPriority === 'amount' }
-                    defaultChecked={ true }
                     onChange={ handleChange }
                 />
-                <label htmlFor={ `priority${inputIndex}` }>Prioritize number of questions</label>
+                <label htmlFor={ `priorityAmount${inputIndex}` }>Prioritize number of questions</label>
                 <br />
                 <input
                     type="radio"
                     id={ `priorityDifficulty${inputIndex}` }
-                    name="queryPriority"
+                    name={ `queryPriority${inputIndex}` }
                     value="difficulty"
                     checked={ quizInputData.queryPriority === 'difficulty' }
                     onChange={ handleChange }
                 />
                 <label htmlFor={ `priorityDifficulty${inputIndex}` }>Prioritize desired difficulty</label>
             </div>
+            {/* CATEGORY */}
             <div className="categoryInputContainer" id='categoryContainer'>
                 <label htmlFor={ `category${inputIndex}` }>Category: </label>
                 { categoryFetchError ? (
@@ -98,9 +117,9 @@ function SelectionInput({ inputIndex, categoryFetchError, setCategoryFetchError,
                         title="You must choose a category or select Random"
                     >
                         <option value="">Select a Category...</option>
-                        { Object.keys(categories).map((category, i) => (
-                            <option key={ i } value={ categories[category] }>
-                                { categories[category].name }
+                        { Object.values(categories).map((category, i) => (
+                            <option key={ i } value={ category.id }>
+                                { category.name }
                             </option>
                         ))}
                         <option value="8">Random</option>
@@ -108,13 +127,15 @@ function SelectionInput({ inputIndex, categoryFetchError, setCategoryFetchError,
                 )}
                 {categoryFetchError && <p className="errorMessage">{ categoryFetchError }</p>}
             </div>
+            {/* DIFFICULTY */}
             <div className="difficultyInputContainer" id='difficultyContainer'>
-                <label htmlFor={ `difficulty${inputIndex}` }>Difficulty: </label>
+                <label htmlFor={ `difficulty${inputIndex}`}>Difficulty: </label>
                 <select
                     id={ `difficulty${inputIndex}` }
                     name="difficulty"
                     onChange={ handleChange }
                     value={ quizInputData.difficulty }
+                    disabled={ !quizInputData.category }
                 >
                     <option value="">Select a Difficulty...</option>
                     <option value="8">Random</option>
@@ -123,22 +144,24 @@ function SelectionInput({ inputIndex, categoryFetchError, setCategoryFetchError,
                     <option value="hard">Hard</option>
                 </select>
             </div>
+            {/* AMOUNT */}
             <div className="amountInputContainer" id='amountContainer'>
                 <label htmlFor={ `amount${inputIndex}` }>Number of Questions: </label>
                 <input
                     type="number"
                     min="1"
-                    max={ maxAvailableQuestions[quizInputData.difficulty] || maxAvailableQuestions.total || 50 }
+                    max={ displayMaxAvailableQuestions() }
                     id={ `amount${inputIndex}` }
                     name="amount"
                     value={ quizInputData.amount || '' }
                     onChange={ handleChange }
+                    disabled={ !quizInputData.difficulty }
                 />
                 { amountError && <p className="errorMessage">{ amountError }</p> }
             </div>
-            { !isInputDataValid && <p>Be certain to choose your priority and fill out all input fields</p> }
+            { !isInputDataValid() && <p>Be certain to choose your priority and fill out all input fields</p> }
         </div>
     )
 }
 
-export default SelectionInput;
+export default QuizSelectionInput;

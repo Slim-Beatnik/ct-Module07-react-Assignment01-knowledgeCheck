@@ -16,6 +16,8 @@ import QuizResults from './components/QuizResults.jsx';
     return
 */
 
+
+
 function App() {
 
     // inactive function placeholder
@@ -92,7 +94,7 @@ function App() {
         team: { teamInfo, setTeamInfo, teams, setTeams, ...sharedProps },
         quiz: { teamInfo, setQuizResults, questions, currQuestion, ...sharedProps },
         results: { quizResults, ...sharedProps },
-        controls: { noop, currentFormId, onPrev, currentPage, setCurrentPage, setQuizMaster, requestTimer, setQuestions, setCurrQuestion, handleSubmit, ...sharedProps }
+        controls: { noop, currentFormId, onPrev, currentPage, setCurrentPage, setQuizMaster, requestTimer, setRequestTimer, setQuestions, setCurrQuestion, handleSubmit, ...sharedProps }
     };
     
     // Define page components dynamically

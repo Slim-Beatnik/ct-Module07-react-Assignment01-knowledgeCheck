@@ -25,6 +25,7 @@ function Welcome(
             .then((response) => response.json())
             .then((data) => {
                 setErrorStatus("");
+                if (quizMaster.name?.length) { updateQuizMaster('name', 'Jay') }
                 updateQuizMaster("token", data.token);
                 setHandleSubmit({func: onNext, btnTitle: 'Continue'});
             })

@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 // import { useTimer } from 'react-timer-hook';
-import InputToggleBtn from '/buttons/addSubToggle.svg';
-import SelectionInput from './SelectionInput.jsx';
+import InputToggleBtn from './buttons/AddSubToggle.jsx';
+import QuizSelectionInput from './QuizSelectionInput.jsx';
 // import QueryTimer from './QueryTimer.jsx';
 
 function QuizSelectionForm(
@@ -19,16 +19,16 @@ function QuizSelectionForm(
     })
 {
 
-    console.log('bypass: ',requestTimer, setRequestTimer, quizRequest, onPrev, onNext, setHandleSubmit, errorStatus)
+    console.log('bypass: ', requestTimer, setRequestTimer,quizRequest, onPrev, onNext, setHandleSubmit, errorStatus)
 
     const [categories, setCategories] = useState({});
     const [categoryFetchError, setCategoryFetchError] = useState('');
-    const [quizFormData, setQuizFormData] = useState([{inputs:{ queryPriority: '', category: '', difficulty: '', amount: '' }}]);
+    const [quizFormData, setQuizFormData] = useState([{ queryPriority: 'difficulty', category: '', difficulty: '', amount: '' }]);
 
+    // set button's initial functionality/display state
+    useEffect(() => { setHandleSubmit({func: handleQuizSelectionFormSubmit , btnTitle: 'Submit'}) }, []); 
     
-
-    
-    
+    // fetch or set categories object array
     useEffect(() => {
         fetch(`https://opentdb.com/api_category.php`)
                 .then(response => response.json())
@@ -69,6 +69,21 @@ function QuizSelectionForm(
     // eslint-disable-next-line react-hooks/exhaustive-deps
     },[]);
 
+    // const displayQueryTimer = (expiryTimestamp) => {
+    //     const { totalSeconds,
+    //         seconds,
+    //         milliseconds,
+    //         isRunning,
+    //         start,
+    //         pause } = useTimer({
+
+    //             expiryTimestamp, onExpire: useEffect(() => {
+    //                 setRequestTimer(noop);
+    //                 setHandleSubmit({ func: noop, btnTitle: {totalSeconds} })
+    //             })
+    // });
+
+    // display categories table if fetch fails
     const displayCategoryTable = () => {
         return (
             <div>
@@ -94,69 +109,72 @@ function QuizSelectionForm(
         )
     }
 
-    const handleInputChange = (index, name, value) => {
+    // handle change function -- SelectionInput prop
+    const handleInputChange = useCallback((index, name, value) => {
         setQuizFormData(prevInputs => {
             const newInputs = [...prevInputs];
             newInputs[index] = { ...newInputs[index], [name]: value};
             return newInputs;
         });
-    }
+    }, [])
 
+    // ******** HELPER FUNCTIONS *********
+    
+    // Form buttons
     // add SelectionInput to display array, and new quizInputData
     const addInput = () => {
         setQuizFormData(prev => [
             ...prev,
-            { queryPriority: '', category: '', difficulty: '', amount: '' }
+            { queryPriority: 'difficulty', category: '', difficulty: '', amount: '' }
         ]);
     }
 
     // remove SelectionInput from display array, and quizInputData at index
     const removeInput = (delIndex) => {
         if (quizFormData.length === 1) {
-            clearForm
+            clearForm();
+            return; // just clear the form if only one input is present
         }
         setQuizFormData(quizFormData.filter((_, index) => index != delIndex));
     }
 
-    // clear data from display and data arrays by reinitializing them to defaults
+    // return form data/display back to initial state
     const clearForm = () => {
-        setQuizFormData([ { queryPriority: '', category: '', difficulty: '', amount: '' }]);
+        setQuizFormData([{ queryPriority: 'difficulty', category: '', difficulty: '', amount: '' }]);
     }
 
+    // Form data validation/handlers
     const isFormDataValid = (data) => {
-        return [
-            data.queryPriority.trim() !== ''
-            && data.category.trim() !== ''
-            && data.difficulty.trim() !== ''
-            && data.amount.trim() !== ''
-        ].every(b => b == true)
+        return Object.values(data).every(input => input?.length);
     }
     
-    const formatQuery = (data) => {
-        return data.map(input => {
-            const query=['type=multiple']
-            if (input.category) query.push(`category=${ input.category }`);
-            if (input.difficulty) query.push(`difficulty=${ input.difficulty }`);
-            query.push(`amount=${ input.amount }`);
-            return query.join('&');
-        });
-    }
+    const formatQuery = (dataObj) => {
+        const query=['type=multiple']
+        // handle random category and difficulty
+        if (dataObj.category) query.push(`category=${ dataObj.category }`);
+        if (dataObj.difficulty) query.push(`difficulty=${ dataObj.difficulty }`);
 
+        query.push(`amount=${ dataObj.amount }`);
+        query.push(`token=${ quizMaster.token }`);
+        return query.join('&'); // example amount=10&category=9&difficulty=easy&type=multiple&token=YOUR_API_KEY
+    }
+    
+    
     const handleQuizSelectionFormSubmit = (event) => {     
         event.preventDefault();
         if (quizFormData.some((data) => !isFormDataValid(data))) {
             setErrorStatus('All fields must be filled.');
-            return;
+            return; // do nothing if any blank fields
         }
 
         const formattedQueries = []
-        quizFormData.map(data => { formattedQueries.push(formatQuery(data)) });
+        quizFormData.forEach(data => formattedQueries.push(formatQuery(data)) );
         setQuizRequest(formattedQueries);
-
         
+        console.log(quizRequest)
     }
     
-
+    console.log('quizFormData: ', quizFormData, 'quizRequest: ', quizRequest)
     return (
         <div className="quizSelectionFormContainer">
             <div className="instructions">
@@ -176,20 +194,21 @@ function QuizSelectionForm(
                 { categories &&
                     <form name="quizSelectionForm" onSubmit={ handleQuizSelectionFormSubmit } className="quizSelectionForm">
                         { quizFormData.map((inputData, index) => (
-                            <div key={ index } className={ `input${ index }` }>
-                                <SelectionInput
+                            <div key={ index } className="inputs" >
+                                <div>
+                                    <InputToggleBtn isSub={ true } bgTopColor="#1C274D" plusColor="#1C274D" bgBottomColor="#de004a" onClick={ () => removeInput(index) } disabled={ quizFormData.length == 1 } />
+                                </div>
+                                <QuizSelectionInput
                                     inputIndex={ index }
                                     quizInputData={ inputData }
-                                    setQuizInputData={ (name, value) => handleInputChange(index, name, value) }
+                                    onInputChange={ (name, value) => handleInputChange(index, name, value) }
                                     categories={ categories }
+                                    quizFormData={ quizFormData }
                                 />
-                                <div className="svgButton">
-                                    <input className="remove" type="image" src={ InputToggleBtn } onClick={ () => removeInput(index) } />
-                                </div>
                             </div>
                         )) }
-                        <div className="svgButton">
-                            <input className="add" type="image" src={ InputToggleBtn } onClick={ addInput } />
+                        <div className="formButton">
+                            <InputToggleBtn isSub={ false } bgTopColor="#fff" plusColor="#1C274D" bgBottomColor="#1C274D" onClick={ addInput } />
                             <button type="button" className="clearFormBtn" onClick={ clearForm }>Clear Form</button>
                         </div>
                     </form>
@@ -197,6 +216,7 @@ function QuizSelectionForm(
             </div>
         </div>
     )
+    
 }
 
 export default QuizSelectionForm;
