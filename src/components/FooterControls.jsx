@@ -10,6 +10,7 @@ function FooterControls({
         currentPage,
         setCurrentPage,
         setQuizMaster,
+        setQuizRequest,
         requestTimer,
         setRequestTimer,
         setQuestions,
@@ -38,6 +39,7 @@ function FooterControls({
         setCurrQuestion(0);
         setHandleSubmit({});
         setRequestTimer(noop);
+        setQuizRequest([]);
         alert("You've ruined EVERYTHING! You're the problem.");
         setErrorStatus('');
         setCurrentPage('welcome');

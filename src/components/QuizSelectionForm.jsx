@@ -1,16 +1,17 @@
 import { useEffect, useState, useCallback } from 'react';
-// import { useTimer } from 'react-timer-hook';
 import InputToggleBtn from './buttons/AddSubToggle.jsx';
 import QuizSelectionInput from './QuizSelectionInput.jsx';
 // import QueryTimer from './QueryTimer.jsx';
 
 function QuizSelectionForm(
     {
+        noop,
+        quiz,
+        setQuiz,
         requestTimer,
         setRequestTimer,
         quizRequest,
         setQuizRequest,
-        onPrev,
         onNext,
         quizMaster,
         setHandleSubmit,
@@ -19,15 +20,12 @@ function QuizSelectionForm(
     })
 {
 
-    console.log('bypass: ', requestTimer, setRequestTimer,quizRequest, onPrev, onNext, setHandleSubmit, errorStatus)
+    
 
     const [categories, setCategories] = useState({});
     const [categoryFetchError, setCategoryFetchError] = useState('');
     const [quizFormData, setQuizFormData] = useState([{ queryPriority: 'difficulty', category: '', difficulty: '', amount: '' }]);
 
-    // set button's initial functionality/display state
-    useEffect(() => { setHandleSubmit({func: handleQuizSelectionFormSubmit , btnTitle: 'Submit'}) }, []); 
-    
     // fetch or set categories object array
     useEffect(() => {
         fetch(`https://opentdb.com/api_category.php`)
@@ -69,21 +67,67 @@ function QuizSelectionForm(
     // eslint-disable-next-line react-hooks/exhaustive-deps
     },[]);
 
-    // const displayQueryTimer = (expiryTimestamp) => {
-    //     const { totalSeconds,
-    //         seconds,
-    //         milliseconds,
-    //         isRunning,
-    //         start,
-    //         pause } = useTimer({
+    // set button's initial functionality/display state
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    useEffect(() => { setHandleSubmit({func: handleQuizSelectionFormSubmit , btnTitle: 'Get Quiz'}) }, []); 
 
-    //             expiryTimestamp, onExpire: useEffect(() => {
-    //                 setRequestTimer(noop);
-    //                 setHandleSubmit({ func: noop, btnTitle: {totalSeconds} })
-    //             })
-    // });
 
-    // display categories table if fetch fails
+
+    const decrementTimer = () => {
+        setInterval(() => {
+            setRequestTimer(prevSeconds => {
+                prevSeconds - 1;
+                console.log('tick')});
+    }, 1001);
+
+    return () => clearInterval(decrementTimer);
+    }
+
+    const fetchQuestions = () => {
+        if (quizRequest.length > 1) {
+            setRequestTimer((quizRequest.length - 1) * 5);
+        }
+        let questions = []
+        console.log(quizRequest)
+        quizRequest.forEach((query) => {
+            setHandleSubmit({func: noop, btnTitle: 'Fetching...' });
+            fetch(`https://opentdb.com/api.php?${ query }`)
+                .then(response => response.json())
+                .then(data => {
+                    questions.push(data.results.filter(q => q.type == 'multiple'));
+                    if (requestTimer) {
+                        setHandleSubmit({func: noop, btnTitle: requestTimer });
+                        const newTime = requestTimer - 5;
+                        while (requestTimer != newTime) {
+                            decrementTimer();
+                        }
+                    }
+                })
+                .catch(error => {
+                    setErrorStatus(`Error fetching questions: ${ error.message }`);
+                    console.log(errorStatus)
+                });
+        })
+        setQuiz(questions);
+        
+    }
+
+    const handleQuizSelectionFormSubmit = (event) => {   
+        event.preventDefault();
+        if (quizFormData.forEach(dataObj => !isFormDataValid(dataObj))) {
+            setErrorStatus('All fields must be filled.');
+            return; // do nothing if any blank fields
+        }
+        let formattedQueries = quizFormData.map(dataObj => formatQuery(dataObj));
+        setQuizRequest(formattedQueries);
+        // onNext();
+        fetchQuestions();
+        console.log('quiz:',quiz, 'queries:', quizRequest)
+    }
+
+    
+
+    console.log(Boolean(onNext))
     const displayCategoryTable = () => {
         return (
             <div>
@@ -143,38 +187,29 @@ function QuizSelectionForm(
         setQuizFormData([{ queryPriority: 'difficulty', category: '', difficulty: '', amount: '' }]);
     }
 
-    // Form data validation/handlers
-    const isFormDataValid = (data) => {
-        return Object.values(data).every(input => input?.length);
+    // Form data validation/formatting
+    const isFormDataValid = (dataObj) => {
+        // check every value in dataObj to verify no nullish or empty strings
+        return Object.values(dataObj).every(inputVal => inputVal?.length);
     }
     
     const formatQuery = (dataObj) => {
-        const query=['type=multiple']
+        //'type=multiple' --- cannot specify type, no api option to check
+        // number of questions of specific type, need to filter
+        const query=[];
         // handle random category and difficulty
-        if (dataObj.category) query.push(`category=${ dataObj.category }`);
-        if (dataObj.difficulty) query.push(`difficulty=${ dataObj.difficulty }`);
+        console.log('do:',dataObj)
+        if (dataObj?.category != '8') query.push(`category=${ dataObj.category }`);
+        if (dataObj?.difficulty != '8') query.push(`difficulty=${ dataObj.difficulty }`);
 
         query.push(`amount=${ dataObj.amount }`);
         query.push(`token=${ quizMaster.token }`);
-        return query.join('&'); // example amount=10&category=9&difficulty=easy&type=multiple&token=YOUR_API_KEY
+        return query.join('&'); // example amount=10&category=9&difficulty=easy&token=YOUR_API_KEY
     }
     
     
-    const handleQuizSelectionFormSubmit = (event) => {     
-        event.preventDefault();
-        if (quizFormData.some((data) => !isFormDataValid(data))) {
-            setErrorStatus('All fields must be filled.');
-            return; // do nothing if any blank fields
-        }
 
-        const formattedQueries = []
-        quizFormData.forEach(data => formattedQueries.push(formatQuery(data)) );
-        setQuizRequest(formattedQueries);
-        
-        console.log(quizRequest)
-    }
     
-    console.log('quizFormData: ', quizFormData, 'quizRequest: ', quizRequest)
     return (
         <div className="quizSelectionFormContainer">
             <div className="instructions">
@@ -195,7 +230,7 @@ function QuizSelectionForm(
                     <form name="quizSelectionForm" onSubmit={ handleQuizSelectionFormSubmit } className="quizSelectionForm">
                         { quizFormData.map((inputData, index) => (
                             <div key={ index } className="inputs" >
-                                <div>
+                                <div className="inputBtnContainer">
                                     <InputToggleBtn isSub={ true } bgTopColor="#1C274D" plusColor="#1C274D" bgBottomColor="#de004a" onClick={ () => removeInput(index) } disabled={ quizFormData.length == 1 } />
                                 </div>
                                 <QuizSelectionInput

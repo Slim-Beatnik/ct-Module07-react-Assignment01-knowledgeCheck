@@ -7,127 +7,102 @@ import MeepleKingToken from './teamTokens/MeepleKingToken.jsx';
 import PokerChipToken from './teamTokens/PokerChipToken.jsx';
 
 
-function TeamCreationInput({ teamInfo, setTeamInfo, teams, setTeams }) {
-    console.log('bypass: ', teamInfo, setTeamInfo, teams, setTeams, InputToggleBtn, AxeToken, CyclopsToken, FireToken, HeartToken, MeepleKingToken, PokerChipToken);
-    // tokens by id and src
-    // const teamIcons = [
-    //     { id: 'axe' },
-    //     { id: 'cyclops' },
-    //     { id: 'fire' },
-    //     { id: 'heart' },
-    //     { id: 'meepleKing' },
-    //     { id: 'poker' }
-    // ];
+function TeamCreationInput({ inputIndex, teamInfo, setTeamInfo, onInputChange }) {
+    console.log('bypass: ', setTeamInfo, InputToggleBtn, AxeToken, CyclopsToken, FireToken, HeartToken, MeepleKingToken, PokerChipToken);
+    //tokens by id and src
+    const teamIcons = [
+        <AxeToken color={ `${teamInfo[{inputIndex}].teamColor || "#000"}` } displayName={false}/>,
+        <CyclopsToken color={ `${teamInfo.teamColor || "#000"}` } displayName={false}/>,
+        <FireToken color={ `${teamInfo.teamColor || "#000"}` } displayName={false}/>,
+        <HeartToken color={ `${teamInfo.teamColor || "#000"}` } displayName={false}/>,
+        <MeepleKingToken color={ `${teamInfo.teamColor || "#000"}` } displayName={false}/>,
+        <PokerChipToken color={ `${teamInfo.teamColor || "#000"}` } displayName={false}/>
+    ];
 
     // color palette for team colors
-    // const teamColors = {
-    //     purple: '#8785B7',
-    //     blue: '#2B3784',
-    //     red: '#be4748',
-    //     yellow: '#ebcc0e',
-    //     grey: '#2b2d31',
-    //     green: '#55FF55'
-    // };
+    const teamColors = {
+        'purple': '#8785B7',
+        'blue': '#2B3784',
+        'red': '#be4748',
+        'yellow': '#ebcc0e',
+        'grey': '#2b2d31',
+        'green': '#55FF55'
+    };
 
-    //teamQuizDisplay: `<img src=${ this.teamToken } style={{ fill: ${ this.teamColor } + ' !important' }} />`,
-    //teamQuizResultsDisplay: `<div>${ this.teamQuizDisplay } <br> <p style={{ fontSize: '1rem', color: ${ this.teamColor } + '!important }}>${ this.teamName }</p></div>`
-
-    // const handleInputChange = (e) => {
-    //     const { name, value } = e.target;
-    //     setTeamInfo(prev => ({ ...prev, [name]: value }));
-    // };
-
-    // const handleTokenSelection = (token) => {
-    //     setTeamInfo(prev => ({ ...prev, token }));
-    // };
-
-    // const handleColorSelection = (color) => {
-    //     setTeamInfo(prev => ({ ...prev, color }));
-    // };
-
-    // const addTeam = () => {
-    //     if (Object.values(teamInfo).some(value => value.trim() === '')) {
-    //         alert('You must fill out all fields.');
-    //         return;
-    //     }
-
-    //     const duplicate = teams.some(team =>
-    //         team.token === teamInfo.token && team.color === teamInfo.color
+    // const [teamInfo, setTeamInfo] = useState(
+    //         {
+    //             teamName: 'Team 1',
+    //             teamColor: '#000',
+    //             teamToken: '',
+    //             teamQuizDisplay: '',
+    //             teamQuizResultsDisplay: ''
+    //         }
     //     );
 
-    //     if (duplicate) {
-    //         alert('That token and color combo is already taken!');
-    //         return;
-    //     }
+    // handle change function -- SelectionInput prop
+    const handleChange = (event) => {
+        let { name, value } = event.target;
+        
+        if (name.includes('teamToken')) {
+            name = 'teamToken';
+        }
+        if (name.includes('teamColor')) {
+            name = 'teamColor';
+        }
+        if (name === 'teamName') {
+            name = 'teamName';
+        }
+        if (value.replace(/[^a-zA-Z]/g, '').toLowerCase().includes('changedlater')) {
+            value = 'A team full of Jerks!';
+        }
 
-    //     setTeams(prev => [...prev, teamInfo]);
-    //     setTeamInfo({ teamName: '', token: '', color: '' });
-    // };
+        onInputChange(name, value); // let parent handle actual state update
+    }
+    
 
-    // const removeTeam = (index) => {
-    //     const updatedTeams = teams.filter((_, i) => i !== index);
-    //     setTeams(updatedTeams);
-    // };
-
-    // return (
-    //     <div className="teamCreationInput">
-    //         <div className="teamInputContainer">
-    //             <input
-    //                 type="text"
-    //                 name="teamName"
-    //                 value={teamInfo.teamName}
-    //                 onChange={handleInputChange}
-    //                 placeholder="Team Name"
-    //             />
-
-    //             <div className="tokenSelection">
-    //                 {teamIcons.map(({ id, src }) => (
-    //                     <option
-    //                         key={id}
-    //                         src={src}
-    //                         alt={id}
-    //                         className={teamInfo.token === id ? 'selected' : ''}
-    //                         onClick={() => handleTokenSelection(id)}
-    //                         style={{ filter: teamInfo.color ? `drop-shadow(0 0 8px ${teamColors[teamInfo.color]})` : 'none' }}
-    //                     />
-    //                 ))}
-    //             </div>
-
-    //             <div className="colorSelection">
-    //                 {Object.entries(teamColors).map(([colorName, colorCode]) => (
-    //                     <div
-    //                         key={colorName}
-    //                         className={`colorCircle ${teamInfo.color === colorName ? 'selected' : ''}`}
-    //                         style={{ backgroundColor: colorCode, height: '30px', width: '30px' }}
-    //                         onClick={() => handleColorSelection(colorName)}
-    //                     />
-    //                 ))}
-    //             </div>
-
-    //             <InputToggleBtn
-    //                 alt="Add Team"
-    //                 className="inputToggleBtn"
-    //                 onClick={addTeam}
-    //             >
-    //         </div>
-
-    //         <div className="teamList">
-    //             {teams.map((team, index) => (
-    //                 <div key={index} className="teamCard">
-    //                     <h3>{team.teamName}</h3>
-    //                     <img src={teamIcons.find(icon => icon.id === team.token).src} alt={team.token} />
-    //                     <p style={{ color: teamColors[team.color] }}>{team.color}</p>
-    //                     <img
-    //                         src={InputToggleBtn}
-    //                         alt="Remove Team"
-    //                         className="inputToggleBtn rotate"
-    //                         onClick={() => removeTeam(index)}
-    //                     />
-    //                 </div>
-    //             ))}
-    //         </div>
-    //     </div>
-    // );
+    return (
+        <div className="teamCreationInputContainer">
+            <div className="nameInputContainer">
+                <label htmlFor={ `teamName${inputIndex}` }>Team Name</label>
+                <input
+                    type="text"
+                    id={ `teamName${inputIndex}` }
+                    name={ `teamName${inputIndex}` }
+                    value={ teamInfo.teamName || 'Team 1' }
+                    onChange={ handleChange }
+                    title="Enter a team's name"
+                    placeholder="Team Name -- cannot be changed later"
+                />
+            </div>
+            <div className="tokenSelection">
+                <label htmlFor={ `teamToken${inputIndex}` }>Team Token</label>
+                <select
+                    id={ `teamToken${inputIndex}` }
+                    name={ `teamToken${inputIndex}` }
+                    value={ teamInfo.teamToken }
+                    onChange={ handleChange }
+                    title="Select a team token"
+                >
+                    { teamIcons.map((icon, i) => {
+                        <option key={ i } value={icon}>{icon}</option>;
+                    })}
+                </select>
+            </div>
+            <div className="colorSelection">
+                {Object.entries(teamColors).map((colorName, colorCode) => (
+                    <div
+                        key={colorName}
+                        id={ `teamColor${inputIndex}` }
+                        name={ `teamColor${inputIndex}` }
+                        value={ teamInfo.color || '#000' }
+                        className={`colorCircle ${teamInfo.color === colorName ? 'selected' : ''}`}
+                        style={{ backgroundColor: colorCode, height: '30px', width: '30px' }}
+                        onClick={ handleChange }
+                    />
+                ))}
+            </div>
+        </div>
+    );
 }
 
 export default TeamCreationInput;

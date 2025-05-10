@@ -29,7 +29,7 @@ function App() {
 
     // footerNav
     const [currentPage, setCurrentPage] = useState('welcome');
-    const [requestTimer, setRequestTimer] = useState(noop);
+    const [requestTimer, setRequestTimer] = useState(0);
     
     // forms - quizSelectionForm and teamSelectionForm
     const [currentFormId, setCurrentFormId] = useState('quizSelectionForm');
@@ -42,17 +42,19 @@ function App() {
     
     // team creation page
     const [teamInfo, setTeamInfo] = useState(
-        {
+        [{
             teamName: 'Team 1',
             teamColor: '#000',
             teamToken: '',
             teamQuizDisplay: '',
             teamQuizResultsDisplay: ''
-        }
+        }]
     );
-    const [teams, setTeams] = useState([]); // store teams for full iteration per quiz question
+    // store teams for full iteration per quiz question
+    const [teams, setTeams] = useState([{}]); 
 
     // quiz page
+    const [quiz, setQuiz] = useState([]); // store quizRequests for full iteration per quiz
     const [questions, setQuestions] = useState([]); // store quizRequests for full iteration per quiz
     const [currQuestion, setCurrQuestion] = useState(0);
 
@@ -90,11 +92,11 @@ function App() {
     // Easy to track props
     const propMap = {
         welcome: { setQuizMaster, ...sharedProps },
-        selection: { requestTimer, setRequestTimer, quizRequest, setQuizRequest, ...sharedProps },
-        team: { teamInfo, setTeamInfo, teams, setTeams, ...sharedProps },
+        selection: { noop, quiz, setQuiz, requestTimer, setRequestTimer, quizRequest, setQuizRequest, ...sharedProps },
+        team: { requestTimer, teamInfo, setTeamInfo, teams, setTeams, ...sharedProps },
         quiz: { teamInfo, setQuizResults, questions, currQuestion, ...sharedProps },
         results: { quizResults, ...sharedProps },
-        controls: { noop, currentFormId, onPrev, currentPage, setCurrentPage, setQuizMaster, requestTimer, setRequestTimer, setQuestions, setCurrQuestion, handleSubmit, ...sharedProps }
+        controls: { noop, quiz, currentFormId, onPrev, currentPage, setCurrentPage, setQuizMaster, requestTimer, setQuizRequest, setRequestTimer, setQuestions, setCurrQuestion, handleSubmit, ...sharedProps }
     };
     
     // Define page components dynamically
@@ -105,7 +107,7 @@ function App() {
         quiz: (props) => <Quiz {...props} />,
         results: (props) => <QuizResults {...props} />
     };
-    console.log(pages)
+    
     return (
         <div id="superContainer">
             <div id="topContainer">
@@ -113,7 +115,6 @@ function App() {
                 pages[currentPage]({ ...propMap[currentPage] })
                 : <Welcome onNext={() => setCurrentPage("selection")} />
             }
-            {/* <QuizSelectionForm { ...propMap['selection'] } /> */}
             </div>
             <div id="controlsContainer">
                 <FooterControls { ...propMap['controls'] } />

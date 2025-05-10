@@ -4,6 +4,7 @@ function QuizSelectionInput({ inputIndex, categoryFetchError, setCategoryFetchEr
 
     const [maxAvailableQuestions, setMaxAvailableQuestions] = useState({});
     const [amountError, setAmountError] = useState('');
+    
     const handleChange = (event) => {
         let { name, value } = event.target;
         if (name.includes('queryPriority')) {
@@ -23,7 +24,7 @@ function QuizSelectionInput({ inputIndex, categoryFetchError, setCategoryFetchEr
                 value = 50;
                 setAmountError(`The amount has been changed to ${ value }. There is a maximum cap of 50 questions for each API query.`);
             }
-
+            value = String(value)
         }
 
         onInputChange(name, value); // let parent handle actual state update
@@ -35,9 +36,7 @@ function QuizSelectionInput({ inputIndex, categoryFetchError, setCategoryFetchEr
 
     
     const formatQuizInputData = (data) => {
-        // handle random category
-        const category = parseInt(data.category);
-        return category == 8 ? 0 : category;
+        return parseInt(data.category);
     }
 
     useEffect(() => {
@@ -150,7 +149,7 @@ function QuizSelectionInput({ inputIndex, categoryFetchError, setCategoryFetchEr
                 <input
                     type="number"
                     min="1"
-                    max={ displayMaxAvailableQuestions() }
+                    max={ displayMaxAvailableQuestions() || 1 }
                     id={ `amount${inputIndex}` }
                     name="amount"
                     value={ quizInputData.amount || '' }
