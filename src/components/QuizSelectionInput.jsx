@@ -11,38 +11,43 @@ function QuizSelectionInput({ inputIndex, categoryFetchError, setCategoryFetchEr
             name = 'queryPriority';
         }
         if (name === 'amount') {
+            // if quizPriority is amount, and request amount is greater than available amount, switch to random difficulty, guaranteeing 50 max questions
+            
+            if (value > 50) {
+                value = 50;
+                setAmountError(`The amount has been changed to ${ value }. There is a maximum cap of 50 questions for each API query.`);
+            }
             if (quizInputData.queryPriority === 'amount' && value > maxAvailableQuestions[quizInputData.difficulty]) {
                 onInputChange('difficulty', '8');
                 value = Math.min(value, maxAvailableQuestions[quizInputData.total])
                 setAmountError(`The amount has been changed to ${ value }. There are ${ maxAvailableQuestions[quizInputData.total] } questions available for this category, but the difficulty will vary.`);
             }
+            // quizPriority: when difficulty, set questions to max available questions for the difficulty to keep request from failing
             if (quizInputData.queryPriority === 'difficulty' && value > maxAvailableQuestions[quizInputData.difficulty]) {
-                value = Math.min(value, maxAvailableQuestions[quizInputData.difficulty]);
+                value = Math.min(value, maxAvailableQuestions.total, maxAvailableQuestions[quizInputData.difficulty]);
                 setAmountError(`The amount has been changed to ${ value }. There are only ${ maxAvailableQuestions[quizInputData.difficulty] } questions available for this difficulty.`);
             }
-            if (value > 50) {
-                value = 50;
-                setAmountError(`The amount has been changed to ${ value }. There is a maximum cap of 50 questions for each API query.`);
+            if (quizInputData.queryPriority === 'difficulty' && quizInputData.difficulty == '8' && value > maxAvailableQuestions.total) {
+                value = Math.min(value, maxAvailableQuestions.total);
+                setAmountError(`The amount has been changed to ${ value }. There are only ${ maxAvailableQuestions.total } questions available for this category.`);
             }
-            value = String(value)
+            
+            if (value <= 0) {
+                value = 1;
+            }
+            value = value.toString();
         }
 
-        onInputChange(name, value); // let parent handle actual state update
+        onInputChange(name, value); // let parent handle actual state update based on index
     }
     
     const isInputDataValid = () => {
         return Object.values(quizInputData).every(value => value.toString().trim() !== '');
     }
 
-    
-    const formatQuizInputData = (data) => {
-        return parseInt(data.category);
-    }
-
     useEffect(() => {
-        const formattedCategory = formatQuizInputData(quizInputData)
-        if (formattedCategory) {
-            fetch(`https://opentdb.com/api_count.php?category=${ formattedCategory }`)
+        if (quizInputData.category && quizInputData.category !== '8') {
+            fetch(`https://opentdb.com/api_count.php?category=${ quizInputData.category }`)
                 .then(response => response.json())
                 .then(data => {
                     const categoryCount = data.category_question_count
@@ -61,7 +66,7 @@ function QuizSelectionInput({ inputIndex, categoryFetchError, setCategoryFetchEr
     }, [quizInputData.category]);
 
     const displayMaxAvailableQuestions = () => {
-        if (quizInputData.queryPriority === 'amount') {
+        if (quizInputData.queryPriority === 'amount' || quizInputData.difficulty === '8') {
             return Math.min(maxAvailableQuestions.total, 50);
         } else {
             return Math.min(maxAvailableQuestions[quizInputData.difficulty], 50);
@@ -154,7 +159,7 @@ function QuizSelectionInput({ inputIndex, categoryFetchError, setCategoryFetchEr
                     name="amount"
                     value={ quizInputData.amount || '' }
                     onChange={ handleChange }
-                    disabled={ !quizInputData.difficulty }
+                    disabled={ !quizInputData.difficulty && !maxAvailableQuestions }
                 />
                 { amountError && <p className="errorMessage">{ amountError }</p> }
             </div>

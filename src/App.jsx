@@ -2,10 +2,10 @@ import { useCallback, useState } from 'react';
 import './App.css';
 import FooterControls from './components/FooterControls.jsx';
 import Welcome from './components/Welcome.jsx';
-import TeamCreationForm from './components/TeamCreationForm.jsx';
+// import TeamCreationForm from './components/TeamCreationForm.jsx';
 import QuizSelectionForm from './components/QuizSelectionForm.jsx';
-import Quiz from './components/Quiz.jsx';
-import QuizResults from './components/QuizResults.jsx';
+import QuizForm from './components/QuizForm.jsx';
+// import QuizResults from './components/QuizResults.jsx';
 // import Tutorial from './components/Tutorial.jsx';
 
 /* document organization:
@@ -25,7 +25,7 @@ function App() {
 
     // all pages
     const [errorStatus, setErrorStatus] = useState('');
-    const [handleSubmit, setHandleSubmit] = useState({func: noop, btnTitle: ''});
+    const [handleSubmit, setHandleSubmit] = useState({func: noop, btnTitle: '', disabled: false});
 
     // footerNav
     const [currentPage, setCurrentPage] = useState('welcome');
@@ -37,34 +37,29 @@ function App() {
     // welcome page
     const [quizMaster, setQuizMaster] = useState([{name: '', token: ''}])
     
-    //quiz selection page - fetch categories
-    const [quizRequest, setQuizRequest] = useState([]);
-    
     // team creation page
-    const [teamInfo, setTeamInfo] = useState(
-        [{
-            teamName: 'Team 1',
-            teamColor: '#000',
-            teamToken: '',
-            teamQuizDisplay: '',
-            teamQuizResultsDisplay: ''
-        }]
-    );
+    // const [teamInfo, setTeamInfo] = useState(
+    //     [{
+    //         teamName: 'Team 1',
+    //         teamColor: '#000',
+    //         teamToken: '',
+    //         teamQuizDisplay: '',
+    //         teamQuizResultsDisplay: ''
+    //     }]
+    // );
     // store teams for full iteration per quiz question
-    const [teams, setTeams] = useState([{}]); 
+    // const [teams, setTeams] = useState([{}]); 
 
     // quiz page
-    const [quiz, setQuiz] = useState([]); // store quizRequests for full iteration per quiz
-    const [questions, setQuestions] = useState([]); // store quizRequests for full iteration per quiz
+    const [quiz, setQuiz] = useState([]);
     const [currQuestion, setCurrQuestion] = useState(0);
-
-    // results page
-    const [quizResults, setQuizResults] = useState([]);
+    const [quizResults, setQuizResults] = useState({});
 
     useCallback(() => {
         if (currentPage === 'welcome') { setCurrentFormId('quizMasterForm') }
         if (currentPage === 'selection') { setCurrentFormId('quizSelectionForm') }
-        if (currentPage === 'team') { setCurrentFormId('teamCreationForm') }
+        //if (currentPage === 'team') { setCurrentFormId('teamCreationForm') }
+        if (currentPage === 'quiz') { setCurrentFormId('quizMultipleChoiceForm') }
     }
     , [currentPage]);
     
@@ -78,33 +73,33 @@ function App() {
     }, [currentPage]);
 
     // Shared props for *almost* all pages
-    const sharedProps = { onNext, quizMaster, setHandleSubmit, errorStatus, setErrorStatus };
+    const sharedProps = { onNext, quizMaster, setHandleSubmit, setErrorStatus };
 
     // prev and next mapped by currentPage
     const navMap = {
         welcome: { prev: null, next: 'selection' },
-        selection: { prev: 'welcome', next: 'team' },
-        team: { prev: 'selection', next: 'quiz' },
-        quiz: { prev: 'team', next: 'results' },
-        results: { prev: 'quiz', next: 'selection' }
+        selection: { prev: 'welcome', next: 'quiz' },
+        // team: { prev: 'selection', next: 'quiz' },
+        quiz: { prev: 'selection', next: 'selection' },
+        // results: { prev: 'quiz', next: 'selection' }
     }
 
     // Easy to track props
     const propMap = {
         welcome: { setQuizMaster, ...sharedProps },
-        selection: { noop, quiz, setQuiz, requestTimer, setRequestTimer, quizRequest, setQuizRequest, ...sharedProps },
-        team: { requestTimer, teamInfo, setTeamInfo, teams, setTeams, ...sharedProps },
-        quiz: { teamInfo, setQuizResults, questions, currQuestion, ...sharedProps },
-        results: { quizResults, ...sharedProps },
-        controls: { noop, quiz, currentFormId, onPrev, currentPage, setCurrentPage, setQuizMaster, requestTimer, setQuizRequest, setRequestTimer, setQuestions, setCurrQuestion, handleSubmit, ...sharedProps }
+        selection: { noop, setQuiz, requestTimer, setRequestTimer, ...sharedProps },
+        // team: { requestTimer, teamInfo, setTeamInfo, teams, setTeams, ...sharedProps },
+        quiz: { quiz, setQuiz, currQuestion, setCurrQuestion, quizResults, setQuizResults, ...sharedProps },
+        // results: { quizResults, ...sharedProps },
+        controls: { noop, setQuiz, errorStatus, currentFormId, onPrev, currentPage, setCurrentPage, setQuizMaster, requestTimer, setCurrQuestion, handleSubmit, ...sharedProps }
     };
     
     // Define page components dynamically
     const pages = {
         welcome: (props) => <Welcome {...props } />,
         selection: (props) => <QuizSelectionForm  {...props} />,
-        team: (props) => <TeamCreationForm {...props} />,
-        quiz: (props) => <Quiz {...props} />,
+        // team: (props) => <TeamCreationForm {...props} />,
+        quiz: (props) => <QuizForm {...props} />,
         results: (props) => <QuizResults {...props} />
     };
     

@@ -25,9 +25,9 @@ function Welcome(
             .then((response) => response.json())
             .then((data) => {
                 setErrorStatus("");
-                if (quizMaster.name?.length) { updateQuizMaster('name', 'Jay') }
+                if (!quizMaster.name?.length) { updateQuizMaster('name', 'Jay') }
                 updateQuizMaster("token", data.token);
-                setHandleSubmit({func: onNext, btnTitle: 'Continue'});
+                setHandleSubmit({func: onNext, btnTitle: 'Continue', disabled: false});
             })
             .catch((error) => {
                 setErrorStatus("No API token for you! " + error.message);
@@ -35,7 +35,7 @@ function Welcome(
     };
     
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    useEffect(() => { setHandleSubmit({func: handleUserTokenSubmit , btnTitle: 'Submit'}) }, []);
+    useEffect(() => { setHandleSubmit({func: handleUserTokenSubmit, btnTitle: 'Submit', disabled: false}) }, []);
 
 
     return (

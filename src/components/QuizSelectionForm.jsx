@@ -6,16 +6,13 @@ import QuizSelectionInput from './QuizSelectionInput.jsx';
 function QuizSelectionForm(
     {
         noop,
-        quiz,
         setQuiz,
-        requestTimer,
-        setRequestTimer,
-        quizRequest,
-        setQuizRequest,
+        // requestTimer,
+        // setRequestTimer,
         onNext,
         quizMaster,
         setHandleSubmit,
-        errorStatus,
+        // errorStatus,
         setErrorStatus
     })
 {
@@ -25,6 +22,7 @@ function QuizSelectionForm(
     const [categories, setCategories] = useState({});
     const [categoryFetchError, setCategoryFetchError] = useState('');
     const [quizFormData, setQuizFormData] = useState([{ queryPriority: 'difficulty', category: '', difficulty: '', amount: '' }]);
+    const [isFetching, setIsFetching] = useState(false);
 
     // fetch or set categories object array
     useEffect(() => {
@@ -67,91 +65,63 @@ function QuizSelectionForm(
     // eslint-disable-next-line react-hooks/exhaustive-deps
     },[]);
 
+    const formDataIncomplete = () => {
+        return quizFormData.some( dataObj => Object.values(dataObj).some( val => val === '' ))
+    }
+
+    // hide useEffect by init before handleQuizSelectionFormSubmit -- fetching will appear the first time isFetching changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    useEffect(() => { setHandleSubmit({func: isFetching ? noop : onNext, btnTitle: isFetching ? 'Fetching quiz questions...' : 'Continue', disabled: isFetching }) }, [isFetching]);
     // set button's initial functionality/display state
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    useEffect(() => { setHandleSubmit({func: handleQuizSelectionFormSubmit , btnTitle: 'Get Quiz'}) }, []); 
+    useEffect(() => { setHandleSubmit({func: handleQuizSelectionFormSubmit , btnTitle: 'Get Quiz', disabled: formDataIncomplete() }) }, [quizFormData]); 
 
+    const fetchSequentially = (queries) => {
+        return new Promise((resolve, reject) => {
+            let allQuestions = [];
+            let index = 0;
 
+            const fetchNext = () => {
+                if (index >= queries.length) {
+                    setIsFetching(false);
+                    resolve(allQuestions);
+                    return;
+                }
 
-    const decrementTimer = () => {
-        setInterval(() => {
-            setRequestTimer(prevSeconds => {
-                prevSeconds - 1;
-                console.log('tick')});
-    }, 1001);
+                setIsFetching(true);
+                fetch(`https://opentdb.com/api.php?${queries[index]}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        const multiple = data.results.filter(q => q.type === 'multiple');
+                        allQuestions.push(...multiple);
+                        index++;
+                        setTimeout(fetchNext, 5001); // Wait 5s+1ms before next
+                    })
+                    .catch(err => {
+                        setErrorStatus(`Failed to fetch: ${err.message}`);
+                        reject(err);
+                    });
+            };
 
-    return () => clearInterval(decrementTimer);
-    }
+            fetchNext();
+        });
+};
 
-    const fetchQuestions = () => {
-        if (quizRequest.length > 1) {
-            setRequestTimer((quizRequest.length - 1) * 5);
-        }
-        let questions = []
-        console.log(quizRequest)
-        quizRequest.forEach((query) => {
-            setHandleSubmit({func: noop, btnTitle: 'Fetching...' });
-            fetch(`https://opentdb.com/api.php?${ query }`)
-                .then(response => response.json())
-                .then(data => {
-                    questions.push(data.results.filter(q => q.type == 'multiple'));
-                    if (requestTimer) {
-                        setHandleSubmit({func: noop, btnTitle: requestTimer });
-                        const newTime = requestTimer - 5;
-                        while (requestTimer != newTime) {
-                            decrementTimer();
-                        }
-                    }
-                })
-                .catch(error => {
-                    setErrorStatus(`Error fetching questions: ${ error.message }`);
-                    console.log(errorStatus)
-                });
-        })
-        setQuiz(questions);
+    const handleQuizSelectionFormSubmit = () => {
         
-    }
 
-    const handleQuizSelectionFormSubmit = (event) => {   
-        event.preventDefault();
-        if (quizFormData.forEach(dataObj => !isFormDataValid(dataObj))) {
-            setErrorStatus('All fields must be filled.');
-            return; // do nothing if any blank fields
-        }
-        let formattedQueries = quizFormData.map(dataObj => formatQuery(dataObj));
-        setQuizRequest(formattedQueries);
-        // onNext();
-        fetchQuestions();
-        console.log('quiz:',quiz, 'queries:', quizRequest)
-    }
+        const formattedQueries = quizFormData.map(formatQuery);
 
-    
-
-    console.log(Boolean(onNext))
-    const displayCategoryTable = () => {
-        return (
-            <div>
-                <caption>Open Trivia Categories as of March 2025</caption>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Category ID</th>
-                            <th>Category Name</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {
-                            categories.map(category => {
-                                return (
-                                    <tr><td>{ category.id }</td><td>{ category.name }</td></tr>
-                                )
-                            })
-                        }
-                    </tbody>
-                </table>
-            </div>
-        )
-    }
+        fetchSequentially(formattedQueries)
+            .then(allQuestions => {
+                setQuiz(allQuestions);
+                setHandleSubmit({func: onNext, btnTitle: 'Take the Quiz', disabled: false });
+        })
+        .catch(err => {
+            console.error('Fetch failed:', err);
+            setErrorStatus('Failed to fetch quiz questions. Please try again.');
+        });
+    }    
 
     // handle change function -- SelectionInput prop
     const handleInputChange = useCallback((index, name, value) => {
@@ -186,29 +156,46 @@ function QuizSelectionForm(
     const clearForm = () => {
         setQuizFormData([{ queryPriority: 'difficulty', category: '', difficulty: '', amount: '' }]);
     }
-
-    // Form data validation/formatting
-    const isFormDataValid = (dataObj) => {
-        // check every value in dataObj to verify no nullish or empty strings
-        return Object.values(dataObj).every(inputVal => inputVal?.length);
-    }
     
     const formatQuery = (dataObj) => {
         //'type=multiple' --- cannot specify type, no api option to check
         // number of questions of specific type, need to filter
         const query=[];
+
         // handle random category and difficulty
-        console.log('do:',dataObj)
-        if (dataObj?.category != '8') query.push(`category=${ dataObj.category }`);
-        if (dataObj?.difficulty != '8') query.push(`difficulty=${ dataObj.difficulty }`);
+        if (dataObj.category != '8') query.push(`category=${ dataObj.category }`);
+        if (dataObj.difficulty != '8') query.push(`difficulty=${ dataObj.difficulty }`);
 
         query.push(`amount=${ dataObj.amount }`);
         query.push(`token=${ quizMaster.token }`);
         return query.join('&'); // example amount=10&category=9&difficulty=easy&token=YOUR_API_KEY
     }
-    
-    
-
+    // *******VISUAL ELEMENT*******
+    // if category fetch fails
+    const displayCategoryTable = () => {
+        return (
+            <div>
+                <caption>Open Trivia Categories as of March 2025</caption>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Category ID</th>
+                            <th>Category Name</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {
+                            categories.map(category => {
+                                return (
+                                    <tr><td>{ category.id }</td><td>{ category.name }</td></tr>
+                                )
+                            })
+                        }
+                    </tbody>
+                </table>
+            </div>
+        )
+    }
     
     return (
         <div className="quizSelectionFormContainer">
@@ -218,8 +205,13 @@ function QuizSelectionForm(
                 <p> Click it again next to the input to remove the input fields in that location.</p>
                 <p>
                     For every 50 questions or different categories, based on the api's hardset rules, populating the questions will take an additional 5 seconds.
-                    <br/>Fret not, you can set up your teams while you wait.
+                    {/* <br/>Fret not, you can set up your teams while you wait. */}
+                    <br />
+                    The get quiz button will be disabled until you fill out the form, as well as during the fetch process.
+                    <br />
                 </p>
+                <p style={{color: '#f58755'}}>*warning* any more than 3 categories can take over a minute to load.</p>
+                
                 {/* if category fetch fails category table will be rendered and input will be number based
                     short-curcuit with called function */
                     categoryFetchError && displayCategoryTable()

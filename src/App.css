@@ -53,6 +53,12 @@ button {
   height: fit-content;
 }
 
+button:disabled {
+  background-color: #d9d9d9;
+  color: #9d9d9d;
+  cursor: not-allowed;
+}
+
 .formContainer {
   margin-left: auto;
   margin-right: auto;
@@ -187,6 +193,19 @@ svg:hover {
   background-color: #34393e99;
 }
 
+#resetPromptButtonContainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin: auto;
+  width: 80%;
+  height: 100%;
+  button {
+    width: 80%;
+  }
+}
+
 .inputs {
   display: inline-flex;
   flex-direction: row;
@@ -255,4 +274,74 @@ svg:hover {
     flex-wrap: wrap;
     width: 100%;
   }
+}
+
+
+.quizAnswerContainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin: auto;
+  width: 100%;
+  
+}
+
+.quizAnswerOption label {
+  display: inline-block;
+  margin-left: 0.5rem;
+  cursor: pointer;
+}
+
+.answer0 + label {
+  color: #ff7f50;
+  padding: 6px;
+}
+
+.answer1 + label {
+  color: #1e90ff;
+  padding: 6px;
+}
+
+.answer2 + label {
+  color: #ad36d1;
+  padding: 6px;
+}
+
+.answer3 + label {
+  color: #d2ba1e;
+  padding: 6px;
+}
+
+/* Add border when selected */
+.answer0:checked + label {
+  border: 2px solid #ff7f50;
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.answer1:checked + label {
+  border: 2px solid #1e90ff;
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.answer2:checked + label {
+  border: 2px solid #ad36d1;
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.answer3:checked + label {
+  border: 2px solid #d2691e;
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.incorrect {
+  border: 2px solid #de004a;
+}
+
+.correct {
+  border: 2px solid #3cb371;
 }
